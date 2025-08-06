@@ -1,6 +1,6 @@
 import React from "react";
 import { format } from "date-fns";
-import { Bot, User } from "lucide-react";
+import { User } from "lucide-react";
 import mohamedImage from "../assets/mohamed.jpg";
 
 interface ChatMessageProps {

@@ -23,9 +23,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSignIn, error: googleErr
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Basic auth error:', err);
-      setError(err.message || 'Failed to sign in');
+      if (err instanceof Error) {
+        setError(err.message || 'Failed to sign in');
+      } else {
+        setError('Failed to sign in');
+      }
     } finally {
       setBasicAuthLoading(false);
     }
