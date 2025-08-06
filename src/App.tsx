@@ -1,17 +1,23 @@
 import React, { useState, useCallback } from 'react';
-import { auth, db } from './firebase';
-import { signInWithPopup, GoogleAuthProvider, signOut, getAuth } from 'firebase/auth';
+import { auth } from './firebase';
+import { signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
 import { Send, Loader2 } from 'lucide-react';
 import { ChatMessage } from './components/ChatMessage';
 import { Sidebar } from './components/Sidebar';
 import { LoginForm } from './components/LoginForm';
 
+interface Message {
+  text: string;
+  isAi: boolean;
+  timestamp: Date;
+}
+
 function App() {
   const [user] = useAuthState(auth);
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -27,12 +33,16 @@ function App() {
         prompt: 'select_account'
       });
       await signInWithPopup(auth, provider);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Auth error:', error);
-      if (error.code === 'auth/popup-blocked') {
-        setAuthError('Popup was blocked. Please allow popups and try again.');
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        setAuthError(null); // User cancelled, no need to show error
+      if (error instanceof FirebaseError) {
+        if (error.code === 'auth/popup-blocked') {
+          setAuthError('Popup was blocked. Please allow popups and try again.');
+        } else if (error.code === 'auth/cancelled-popup-request') {
+          setAuthError(null); // User cancelled, no need to show error
+        } else {
+          setAuthError('Failed to sign in. Please try again.');
+        }
       } else {
         setAuthError('Failed to sign in. Please try again.');
       }
@@ -55,7 +65,7 @@ function App() {
     if (!input.trim() || loading) return;
 
     setLoading(true);
-    const userMessage = {
+    const userMessage: Message = {
       text: input,
       isAi: false,
       timestamp: new Date(),
@@ -67,7 +77,7 @@ function App() {
 
       // Simulate AI response
       setTimeout(() => {
-        const aiMessage = {
+        const aiMessage: Message = {
           text: "I'm an AI assistant. How can I help you today?",
           isAi: true,
           timestamp: new Date(),
